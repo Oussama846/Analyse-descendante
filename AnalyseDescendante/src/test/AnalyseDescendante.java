@@ -12,13 +12,13 @@ public class AnalyseDescendante {
 
     public boolean parseS() {
         if (pos >= input.length()) {
-            return false; // Fin de la chaîne
+            return false;
         }
 
         // S → Sb
         if (input.charAt(pos) == 'S' && pos + 1 < input.length() && input.charAt(pos + 1) == 'b') {
             pos++;  // Consommer 'S'
-            return parseS() && input.charAt(pos++) == 'b'; // Récursivité
+            return parseS() && input.charAt(pos++) == 'b';
         }
 
         // S → c
