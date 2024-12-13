@@ -1,59 +1,175 @@
 package test;
 
 public class AnalyseDescendante {
+    
+    private String input;
+    private int pos;
 
-	    private String texte;
-	    private int position;
+    public RecursiveDescendantParser(String input) {
+        this.input = input;
+        this.pos = 0;
+    }
 
-	    public ParseurDescendant(String texte) {
-	        this.texte = texte;
-	        this.position = 0;
-	    }
-	    public boolean parse() {
-	        return S();
-	    }
-	    private boolean S() {
-	        
-	        if (position < texte.length() && texte.charAt(position) == 'c') {
-	            
-	            position++;
-	            return true;
-	        }
-	        if (position < texte.length() && texte.charAt(position) == 'b') {
-	            
-	            if (S()) {
-	                position++;
-	                return true;
-	            }
-	        }
-	        return false;
-	    }
+    public boolean parseS() {
+        if (pos >= input.length()) {
+            return false; // Fin de la chaîne
+        }
 
-	    public static void main(String[] args) {
-	        String texte1 = "cbb";
-	        ParseurDescendant parseur1 = new ParseurDescendant(texte1);
-	        if (parseur1.parse()) {
-	            System.out.println("La chaîne '" + texte1 + "' est valide selon la grammaire.");
-	        } else {
-	            System.out.println("La chaîne '" + texte1 + "' n'est pas valide selon la grammaire.");
-	        }
+        // S → Sb
+        if (input.charAt(pos) == 'S' && pos + 1 < input.length() && input.charAt(pos + 1) == 'b') {
+            pos++;  // Consommer 'S'
+            return parseS() && input.charAt(pos++) == 'b'; // Récursivité
+        }
 
-	        String texte2 = "cbbb";
-	        ParseurDescendant parseur2 = new ParseurDescendant(texte2);
-	        if (parseur2.parse()) {
-	            System.out.println("La chaîne '" + texte2 + "' est valide selon la grammaire.");
-	        } else {
-	            System.out.println("La chaîne '" + texte2 + "' n'est pas valide selon la grammaire.");
-	        }
+        // S → c
+        if (input.charAt(pos) == 'c') {
+            pos++;
+            return true;
+        }
 
-	        String texte3 = "b";
-	        ParseurDescendant parseur3 = new ParseurDescendant(texte3);
-	        if (parseur3.parse()) {
-	            System.out.println("La chaîne '" + texte3 + "' est valide selon la grammaire.");
-	        } else {
-	            System.out.println("La chaîne '" + texte3 + "' n'est pas valide selon la grammaire.");
-	        }
-	    }
+        // S → bcSbSS
+        if (input.charAt(pos) == 'b') {
+            pos++;
+            if (parseS()) {
+                if (pos < input.length() && input.charAt(pos) == 'b') {
+                    pos++;
+                    if (parseS() && parseS()) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // S → bSb
+        if (input.charAt(pos) == 'b') {
+            pos++;
+            if (parseS()) {
+                if (pos < input.length() && input.charAt(pos) == 'b') {
+                    pos++;
+                    return true;
+                }
+            }
+        }
+
+        // S → cAc
+        if (input.charAt(pos) == 'c') {
+            pos++;
+            if (parseA()) {
+                if (pos < input.length() && input.charAt(pos) == 'c') {
+                    pos++;
+                    return true;
+                }
+            }
+        }
+
+        return false; 
+    }
+
+    public boolean parseA() {
+        if (pos >= input.length()) {
+            return false;
+        }
+
+        // A → bAA
+        if (input.charAt(pos) == 'b') {
+            pos++;
+            if (parseA()) {
+                if (parseA()) {
+                    return true;
+                }
+            }
+        }
+
+        // A → cASAb
+        if (input.charAt(pos) == 'c') {
+            pos++;
+            if (parseA()) {
+                if (pos < input.length() && input.charAt(pos) == 'S') {
+                    pos++;
+                    if (input.charAt(pos) == 'b') {
+                        pos++;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // A → dcb
+        if (input.charAt(pos) == 'd') {
+            pos++;
+            if (input.charAt(pos) == 'c') {
+                pos++;
+                if (input.charAt(pos) == 'b') {
+                    pos++;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public boolean parse() {
+        return parseS() && pos == input.length();
+    }
+
+    public static void main(String[] args) {
+        String[] testStrings = {"cdcbc", "bcdcbcb", "cbdcbdcbc", "ccdcbdcbc", "cdcbbb", "cdcb", ""};
+
+        for (String testString : testStrings) {
+            RecursiveDescendantParser parser = new RecursiveDescendantParser(testString);
+            System.out.println("Test avec la chaîne \"" + testString + "\": " + (parser.parse() ? "Validée" : "Non validée"));
+        }
+    }
+
+
+public class SimpleParser {
+
+    private String input;
+    private int pos;
+
+    public SimpleParser(String input) {
+        this.input = input;
+        this.pos = 0;
+    }
+
+    public boolean parseS() {
+        if (pos >= input.length()) {
+            return false;
+        }
+
+        // S → bSc
+        if (input.charAt(pos) == 'b') {
+            pos++;
+            if (parseS()) {
+                if (pos < input.length() && input.charAt(pos) == 'c') {
+                    pos++;
+                    return true;
+                }
+            }
+        }
+
+        // S → d
+        if (input.charAt(pos) == 'd') {
+            pos++;
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean parse() {
+        return parseS() && pos == input.length();
+    }
+
+    public static void main(String[] args) {
+        String[] testStrings = {"d", "bdc", "bbdcc", "b", "c", "bbcd", "bcdd"};
+
+        for (String testString : testStrings) {
+            SimpleParser parser = new SimpleParser(testString);
+            System.out.println("Test avec la chaîne \"" + testString + "\": " + (parser.parse() ? "Validée" : "Non validée"));
+        }
+    }
+}
 	}
-
 
